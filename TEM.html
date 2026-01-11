@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEM Physics Lab v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        canvas { background: #020617; border-radius: 12px; border: 2px solid #1e293b; width: 100%; height: 380px; cursor: help; }
+        .screen-view { background: radial-gradient(circle, #064e3b 0%, #000 100%); border: 4px solid #475569; }
+        .atom { width: 14px; height: 14px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #22c55e; }
+        #tooltip { pointer-events: none; transition: opacity 0.2s; z-index: 50; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+
+    <header class="max-w-[1600px] mx-auto mb-6 text-center">
+        <h1 class="text-4xl font-extrabold text-cyan-400">Transmission Electron Microscope (TEM) [PLKCHC]</h1>
+        <p class="text-slate-400 mt-2 text-lg uppercase tracking-widest font-semibold italic">Experiment: The Diffraction Limit & De Broglie Waves</p>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-8 space-y-6">
+            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 relative shadow-2xl">
+                <canvas id="temCanvas"></canvas>
+                <div id="tooltip" class="absolute opacity-0 bg-slate-800/95 border border-cyan-500 p-4 rounded-lg shadow-2xl max-w-xs text-sm">
+                    <h3 id="tip-title" class="text-cyan-400 font-bold mb-1 uppercase"></h3>
+                    <p id="tip-desc" class="text-slate-300 leading-snug"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-900/80 p-5 rounded-xl border-l-4 border-blue-500 shadow-lg">
+                    <h4 class="text-blue-400 font-bold mb-3 uppercase text-sm italic underline">1. Momentum (p)</h4>
+                    <div class="text-xs text-slate-400 mb-2 font-mono">\(p = \sqrt{2mqV}\)</div>
+                    <div id="resP" class="text-lg font-mono text-white font-bold tracking-tighter">---</div>
+                </div>
+
+                <div class="bg-slate-900/80 p-5 rounded-xl border-l-4 border-purple-500 shadow-lg">
+                    <h4 class="text-purple-400 font-bold mb-3 uppercase text-sm italic underline">2. Wavelength (\(\lambda\))</h4>
+                    <div class="text-xs text-slate-400 mb-2 font-mono">\(\lambda = \frac{h}{p}\)</div>
+                    <div id="resL" class="text-lg font-mono text-white font-bold tracking-tighter">---</div>
+                </div>
+
+                <div class="bg-slate-900/80 p-5 rounded-xl border-l-4 border-green-500 shadow-lg">
+                    <h4 class="text-green-400 font-bold mb-3 uppercase text-sm italic underline">3. Resolution (s)</h4>
+                    <div class="text-xs text-slate-400 mb-1 font-mono">\(s = r \frac{1.22\lambda}{D}\)</div>
+                    <div class="text-[10px] text-slate-500 mb-2 italic">Using simplified constants: r=1, D=1</div>
+                    <div id="resS" class="text-2xl font-mono text-green-400 font-bold tracking-tighter">---</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex flex-col items-center shadow-2xl">
+                <h3 class="text-green-500 font-bold mb-6 tracking-widest uppercase text-lg">Imaging Screen</h3>
+                <div id="fluoScreen" class="w-64 h-64 rounded-full screen-view flex items-center justify-center overflow-hidden relative shadow-[0_0_50px_rgba(34,197,94,0.2)]">
+                    <div id="atomGrid" class="grid grid-cols-6 gap-5 transition-all duration-500 opacity-10">
+                        </div>
+                </div>
+                <div id="statusText" class="mt-6 font-mono text-slate-500 animate-pulse text-sm">SYSTEM STANDBY</div>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-6 shadow-xl">
+                <div class="flex justify-between items-center">
+                    <label class="text-sm font-bold text-slate-400 uppercase">Acceleration Voltage</label>
+                    <span id="vDisplay" class="text-3xl font-mono text-cyan-400 font-bold">10,000 V</span>
+                </div>
+                <input type="range" id="vSlider" min="5000" max="250000" step="5000" value="10000" 
+                       class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                <button id="powerBtn" class="w-full py-5 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl shadow-lg transition-all active:scale-95 text-lg uppercase">
+                    Initiate Electron Beam
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-12 bg-slate-900/50 p-8 rounded-2xl border border-slate-800 mt-4">
+            <h2 class="text-2xl font-bold text-cyan-400 mb-4 uppercase italic">Experimental Conclusion</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-slate-300 leading-relaxed">
+                <div class="space-y-4">
+                    <p>1. The experiment demonstrates that the <strong>Resolution (\(s\))</strong> of a microscope is fundamentally limited by the <strong>Wavelength (\(\lambda\))</strong> of the probe used.</p>
+                    <p>2. According to the Rayleigh Criterion, \(s \approx \text{order of } \lambda\). In our TEM model, the resolution reaches a magnitude of <span class="text-cyan-400 font-bold">\(10^{-11}\) to \(10^{-12}\) meters</span>.</p>
+                </div>
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 shadow-inner">
+                    <h3 class="text-white font-bold mb-3 uppercase text-sm tracking-widest">Comparison of Resolving Power</h3>
+                    <table class="w-full text-sm">
+                        <tr class="border-b border-slate-800"><td class="py-2">Optical Microscope</td><td class="py-2 text-right font-mono text-red-400">~ 10⁻⁷ m</td></tr>
+                        <tr class="border-b border-slate-800"><td class="py-2">Transmission Electron (TEM)</td><td class="py-2 text-right font-mono text-green-400">~ 10⁻¹¹ m</td></tr>
+                        <tr><td class="py-4 font-bold text-white">Improvement Factor</td><td class="py-4 text-right font-bold text-cyan-400">~ 10,000x to 100,000x</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('temCanvas');
+        const ctx = canvas.getContext('2d');
+        const vSlider = document.getElementById('vSlider');
+        const vDisplay = document.getElementById('vDisplay');
+        const powerBtn = document.getElementById('powerBtn');
+        const atomGrid = document.getElementById('atomGrid');
+        const tooltip = document.getElementById('tooltip');
+
+        // Physics Constants (r=1, D=1 as requested)
+        const h = 6.626e-34, m = 9.11e-31, q = 1.602e-19, D = 1, r = 1;
+        let isActive = false, particles = [];
+
+        // Component data for labels and hover
+        const comps = [
+            {n: "Electron Gun", x: 20, y: 160, w: 50, h: 60, d: "Thermionic emission source. Heats a tungsten filament to release electrons."},
+            {n: "Anode (+V)", x: 120, y: 150, w: 20, h: 80, d: "Creates a potential difference to accelerate electrons to relativistic speeds."},
+            {n: "Condenser Lens", x: 220, y: 130, w: 40, h: 120, d: "Focuses the scattered electron beam into a tight, parallel stream."},
+            {n: "Specimen", x: 350, y: 155, w: 10, h: 70, d: "The ultra-thin sample (e.g., biological tissue or crystal) being imaged."},
+            {n: "Objective Lens", x: 450, y: 110, w: 50, h: 160, d: "The primary lens. It forms the first image and determines the system resolution (s)."},
+            {n: "Projection Lens", x: 630, y: 90, w: 50, h: 200, d: "Expands and projects the magnified image onto the viewing screen."},
+            {n: "Imaging Screen", x: 770, y: 70, w: 20, h: 240, d: "Coated with phosphorus. Converts high-energy electrons into visible light image."}
+        ];
+
+        // Init Atoms
+        for(let i=0; i<36; i++) {
+            const div = document.createElement('div');
+            div.className = "atom";
+            atomGrid.appendChild(div);
+        }
+
+        function updatePhysics() {
+            const V = parseFloat(vSlider.value);
+            vDisplay.innerText = V.toLocaleString() + " V";
+            const p = Math.sqrt(2 * m * q * V);
+            const lambda = h / p;
+            const s = r * (1.22 * lambda) / D;
+
+            document.getElementById('resP').innerText = p.toExponential(3) + " kg·m/s";
+            document.getElementById('resL').innerText = lambda.toExponential(3) + " m";
+            document.getElementById('resS').innerText = (s * 1e9).toFixed(5) + " nm";
+
+            const blurVal = Math.max(0, (s * 1e11) - 0.1);
+            atomGrid.style.filter = isActive ? `blur(${blurVal}px)` : `blur(15px)`;
+            atomGrid.style.opacity = isActive ? 1 : 0.1;
+            document.getElementById('statusText').innerText = isActive ? "BEAM ACTIVE: 100% INTENSITY" : "SYSTEM STANDBY";
+        }
+
+        function drawSchematic() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const mid = canvas.height / 2;
+            
+            comps.forEach(c => {
+                ctx.fillStyle = (c.n === "Specimen") ? "#ef4444" : "#1e293b";
+                ctx.strokeStyle = "#334155"; ctx.lineWidth = 1;
+                
+                if(c.n === "Electron Gun") {
+                    ctx.strokeStyle = isActive ? "#fbbf24" : "#334155"; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(c.x, mid-15); ctx.lineTo(c.x+30, mid); ctx.lineTo(c.x, mid+15); ctx.stroke();
+                } else if(c.n === "Imaging Screen") {
+                    ctx.strokeStyle = "#059669"; ctx.strokeRect(c.x, c.y, c.w, c.h);
+                } else {
+                    ctx.fillRect(c.x, c.y, c.w, c.h);
+                    ctx.strokeRect(c.x, c.y, c.w, c.h);
+                }
+
+                // Permanent Large Labels
+                ctx.fillStyle = "#94a3b8"; ctx.font = "bold 13px Arial"; ctx.textAlign = "center";
+                ctx.fillText(c.n, c.x + c.w/2, c.y + c.h + 25);
+            });
+
+            if(isActive) {
+                if(Math.random() > 0.4) particles.push({x: 50, y: mid + (Math.random()-0.5)*10, v: 5});
+                particles.forEach((p, i) => {
+                    p.x += p.v;
+                    if(p.x > 120) p.v = 15;
+                    if(p.x > 450) p.y += (p.y - mid) * 0.02;
+                    if(p.x > 630) p.y += (p.y - mid) * 0.04;
+                    ctx.fillStyle = "#22d3ee"; ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, 7); ctx.fill();
+                    if(p.x > canvas.width) particles.splice(i, 1);
+                });
+            }
+            requestAnimationFrame(drawSchematic);
+        }
+
+        // Hover Detection
+        canvas.onmousemove = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+            let hit = false;
+            comps.forEach(c => {
+                if(mx > c.x && mx < c.x+c.w && my > c.y && my < c.y+c.h) {
+                    tooltip.style.opacity = 1;
+                    tooltip.style.left = (e.clientX - rect.left + 20) + "px";
+                    tooltip.style.top = (e.clientY - rect.top + 20) + "px";
+                    document.getElementById('tip-title').innerText = c.n;
+                    document.getElementById('tip-desc').innerText = c.d;
+                    hit = true;
+                }
+            });
+            if(!hit) tooltip.style.opacity = 0;
+        };
+
+        powerBtn.onclick = () => {
+            isActive = !isActive;
+            powerBtn.innerText = isActive ? "Deactivate Beam" : "Initiate Electron Beam";
+            powerBtn.classList.toggle('bg-cyan-600'); powerBtn.classList.toggle('bg-red-600');
+            updatePhysics();
+        };
+
+        vSlider.oninput = updatePhysics;
+        window.onload = () => { 
+            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+            updatePhysics(); drawSchematic(); 
+        };
+    </script>
+</body>
+</html>
