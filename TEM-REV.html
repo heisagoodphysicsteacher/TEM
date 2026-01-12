@@ -56,7 +56,7 @@
 
             <div class="math-card p-6 rounded-2xl">
                 <h4 class="text-green-400 font-black text-xs mb-3 uppercase">3. Resolution (s)</h4>
-                <div class="text-lg mb-4 text-center">$$s = 1.22 \lambda r/ D $$</div>
+                <div class="text-lg mb-4 text-center">$$s = 1.22 \lambda r/ D  where r&D=1 $$</div>
                 <div class="sub-box text-[11px]">
                     <span class="text-slate-400 italic">Substitution:</span><br>
                     1.22 &times; ( <span id="subL" class="text-green-400 val-highlight">---</span> )
@@ -114,8 +114,8 @@
             {n: "Condenser", x: 0.30, w: 0.06, d: "Electromagnetic lenses that focus the electron beam into a parallel path."},
             {n: "Specimen", x: 0.46, w: 0.015, d: "The ultra-thin sample being imaged. Electrons pass through it."},
             {n: "Objective", x: 0.62, w: 0.08, d: "Magnetic lens that determines the initial resolution and magnification."},
-            {n: "Projection", x: 0.80, w: 0.08, d: "Final stage lenses that expand the image onto the detector screen."},
-            {n: "Screen", x: 0.95, w: 0.02, d: "Phosphor-coated screen that glows green when hit by electrons, making the image visible."}
+            {n: "Projection", x: -0.80, w: 0.08, d: "Final stage lenses that expand the image onto the detector screen."},
+            {n: "Screen", x: -0.95, w: 0.02, d: "Phosphor-coated screen that glows green when hit by electrons, making the image visible."}
         ];
 
         function formatHTMLScientific(num) {
@@ -231,5 +231,6 @@
 </body>
 
 </html>
+
 
 
